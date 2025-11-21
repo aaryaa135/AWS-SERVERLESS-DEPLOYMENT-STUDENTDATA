@@ -2,20 +2,28 @@ import json
 import boto3
 
 def lambda_handler(event, context):
-    # Initialize a DynamoDB resource object for the specified region
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
+    # Correct region for your setup
+    dynamodb = boto3.resource('dynamodb', region_name='eu-north-1')
 
-    # Select the DynamoDB table named 'studentData'
+    # DynamoDB table
     table = dynamodb.Table('studentData')
 
-    # Scan the table to retrieve all items
+    # Scan table
     response = table.scan()
     data = response['Items']
 
-    # If there are more items to scan, continue scanning until all items are retrieved
+    # Pagination handling
     while 'LastEvaluatedKey' in response:
         response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
         data.extend(response['Items'])
 
-    # Return the retrieved data
-    return data
+    # Return properly formatted API Gateway response
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
+        },
+        "body": json.dumps(data)
+    }
